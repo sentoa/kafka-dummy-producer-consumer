@@ -68,6 +68,6 @@ spec:
           # Publish a new message with a timestamp every second
           while True:
             for topic in topic_list:
-              message = {'value': f"{uuid.uuid4()"}}
+              message = {'value': f"{uuid.uuid4()}"}
               producer.send(topic, value=message)
               logging.info(f"Published message: {message} for topic {topic}")
