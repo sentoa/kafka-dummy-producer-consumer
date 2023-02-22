@@ -1,0 +1,11 @@
+apiVersion: v2
+annotations:
+  category: Testing
+appVersion: "1.0.0"
+name: kafka-dummy-producer-consumer
+description: A test producer and consumer used for testing Kafka
+type: application
+maintainers:
+  - name: Peter Kjaer
+    email: pekj@netcompany.com
+version: 1.0.0

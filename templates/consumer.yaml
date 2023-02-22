@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-dummy-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-dummy-consumer
+  template:
+    metadata:
+      labels:
+        app: kafka-dummy-consumer
+    spec:
+      initContainers:
+      - name: install-package
+        image: bitnami/python:3.11.2
+        command: ["sh", "-c", "pip install kafka-python -t /app"]
+        volumeMounts:
+        - name: app
+          mountPath: /app
+      volumes:
+      - name: app
+        emptyDir: {}
+      containers:
+      - name: kafka-dummy-consumer
+        imagePullPolicy: Always
+        image: bitnami/python:3.11.2
+        volumeMounts:
+        - name: app
+          mountPath: /app
+        ports:
+        - name: web
+          containerPort: 8080
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "1"
+          requests:
+            memory: 256Mi
+            cpu: "0.2"
+        command:
+        - python
+        - -c
+        - |
+          from kafka import KafkaConsumer
+          import json
+          import logging
+
+          # Set up a logger to output Kafka logs to a file
+          logging.basicConfig(filename='kafka.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+          
+          # Define the Kafka topic to publish messages to
+          topic_name = 'dummy_topic'
+
+          # Define the Kafka broker server's hostname and port number
+          bootstrap_servers = ['kafka-westeurope:9092']
+
+          # Create a Kafka consumer instance
+          consumer = KafkaConsumer(
+              topic_name,
+              value_deserializer=lambda v: json.loads(v.decode('utf-8')),
+              bootstrap_servers=bootstrap_servers,
+              auto_offset_reset='latest',
+              enable_auto_commit=True,
+              group_id='my_group'
+          )
+
+          # Continuously poll for new messages in the Kafka topic
+          for message in consumer:
+              logging.info(f"Received message: {message.value}")
+              print(message.value)

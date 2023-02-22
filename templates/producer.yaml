@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-dummy-producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-dummy-producer
+  template:
+    metadata:
+      labels:
+        app: kafka-dummy-producer
+    spec:
+      initContainers:
+      - name: install-package
+        image: bitnami/python:3.11.2
+        command: ["sh", "-c", "pip install kafka-python -t /app"]
+        volumeMounts:
+        - name: app
+          mountPath: /app
+      volumes:
+      - name: app
+        emptyDir: {}
+      containers:
+      - name: kafka-dummy-producer
+        imagePullPolicy: Always
+        image: bitnami/python:3.11.2
+        volumeMounts:
+        - name: app
+          mountPath: /app
+        ports:
+        - name: web
+          containerPort: 8080
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: "1"
+          requests:
+            memory: 256Mi
+            cpu: "0.2"
+        command:
+        - python
+        - -c
+        - |
+          from kafka import KafkaProducer
+          import json
+          import time
+          # Set up a logger to output Kafka logs to a file
+          logging.basicConfig(filename='kafka.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
+          # Define the Kafka topic to publish messages to
+          topic_name = 'dummy_topic'
+
+          # Define the Kafka broker server's hostname and port number
+          bootstrap_servers = ['kafka-westeurope:9092']
+
+          # Create a Kafka producer instance
+          producer = KafkaProducer(
+              value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+              bootstrap_servers=bootstrap_servers
+          )
+
+          # Publish a new message with a timestamp every second
+          while True:
+              timestamp = int(time.time())
+              message = {'value': timestamp}
+              producer.send(topic_name, value=message)
+              logging.info(f"Published message: {message}")
+              time.sleep(1)
