@@ -47,13 +47,14 @@ spec:
           import json
           import time
           import logging
+          import uuid
           
           # Set up a logger to output Kafka logs to a file
           logging.basicConfig(filename='kafka.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
           # Define the Kafka topic to publish messages to
-          topic_name = 'dummy_topic'
+          topic_list = ['aodb-background-job', 'aodb-pipeline-dtd']
 
           # Define the Kafka broker server's hostname and port number
           bootstrap_servers = ['kafka-westeurope:9092']
@@ -66,8 +67,7 @@ spec:
 
           # Publish a new message with a timestamp every second
           while True:
-              timestamp = int(time.time())
-              message = {'value': timestamp}
-              producer.send(topic_name, value=message)
-              logging.info(f"Published message: {message}")
-              time.sleep(1)
+            for topic in topic_list:
+              message = {'value': uuid.uuid4()}
+              producer.send(topic, value=message)
+              logging.info(f"Published message: {message} for topic {topic}")
